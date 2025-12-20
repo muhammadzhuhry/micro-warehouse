@@ -24,6 +24,7 @@ func ConnectionPostgres(cfg configs.Config) (*Postgres, error) {
 		return nil, err
 	}
 
+	// Auto migrate = create tables if not exist
 	db.AutoMigrate(&model.User{}, &model.Role{}, &model.UserRole{})
 	sqlDB, err := db.DB()
 	if err != nil {
@@ -31,6 +32,7 @@ func ConnectionPostgres(cfg configs.Config) (*Postgres, error) {
 		return nil, err
 	}
 	
+	// Seed = insert initial data
 	SeedRole(db)
 	SeedManager(db)
 
