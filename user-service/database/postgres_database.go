@@ -31,6 +31,9 @@ func ConnectionPostgres(cfg configs.Config) (*Postgres, error) {
 		return nil, err
 	}
 	
+	SeedRole(db)
+	SeedManager(db)
+
 	sqlDB.SetMaxIdleConns(10)
 	sqlDB.SetMaxOpenConns(100)
 
