@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"micro-warehouse/user-service/configs"
 
@@ -28,16 +29,6 @@ type rabbitMQService struct {
 	config  configs.Config
 }
 
-// Close implements [RabbitMQServiceInterface].
-func (r *rabbitMQService) Close() error {
-	panic("unimplemented")
-}
-
-// PublishEmail implements [RabbitMQServiceInterface].
-func (r *rabbitMQService) PublishEmail(ctx context.Context, payload EmailPayload) error {
-	panic("unimplemented")
-}
-
 func NewRabbitMQService(config configs.Config) (RabbitMQServiceInterface, error) {
 	conn, err := amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s:%s/", config.RabbitMQ.Username, config.RabbitMQ.Password, config.RabbitMQ.Host, config.RabbitMQ.Port))
 	if err != nil {
@@ -56,4 +47,59 @@ func NewRabbitMQService(config configs.Config) (RabbitMQServiceInterface, error)
 		channel: ch,
 		config:  config,
 	}, nil
+}
+
+// Close implements [RabbitMQServiceInterface].
+func (r *rabbitMQService) Close() error {
+	if r.channel != nil {
+		r.channel.Close()
+	}
+
+	if r.conn != nil {
+		return r.conn.Close()
+	}
+
+	return nil
+}
+
+// PublishEmail implements [RabbitMQServiceInterface].
+func (r *rabbitMQService) PublishEmail(ctx context.Context, payload EmailPayload) error {
+	// Convert payload to JSON
+	body, err := json.Marshal(payload)
+	if err != nil {
+		log.Errorf("[RabbitMQService] PublishEmail - 1: %v", err)
+		return err
+	}
+
+	// Declare the queue if not exists
+	queue, err := r.channel.QueueDeclare(
+		"email_queue",	// name
+		true,           // durable
+		false,          // delete when unused
+		false,          // exclusive
+		false,          // no-wait
+		nil,            // arguments
+	)
+
+	if err != nil {
+		return fmt.Errorf("failed to declare email queue: %v", err)
+	}
+
+	// Publish the message to the queue (without exchange)
+	err = r.channel.Publish(
+		"",		 			// exchange (empty string means default exchange)
+		queue.Name, 		// routing key (queue name)
+		false,				// mandatory
+		false,				// immediate
+		amqp.Publishing{
+			ContentType: "application/json",
+			Body:        body,
+		},
+	)
+
+	if err != nil {
+		return fmt.Errorf("failed to publish email message: %v", err)
+	}
+
+	return nil
 }
