@@ -101,7 +101,22 @@ func (u *userUsecase) EditAssignUserToRole(ctx context.Context, assignRoleID uin
 
 // GetAllUserRoles implements UserUsecaseInterface.
 func (u *userUsecase) GetAllUserRoles(ctx context.Context, page int, limit int, search string, sortBy string, sortOrder string) ([]model.UserRole, int64, error) {
-	panic("unimplemented")
+	if page < 1 {
+		page = 1
+	}
+
+	if limit < 1 || limit > 100 {
+		limit = 10
+	}
+
+	// Get user roles from repository
+	userRoles, totalRecords, err := u.userRepo.GetAllUserRoles(ctx, page, limit, search, sortBy, sortOrder)
+	if err != nil {
+		log.Errorf("[UserUsecase] GetAllUserRoles - 1: %v", err)
+		return nil, 0, err
+	}
+
+	return userRoles, totalRecords, nil
 }
 
 // GetAllUsers implements UserUsecaseInterface.
