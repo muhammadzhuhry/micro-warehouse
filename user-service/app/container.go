@@ -4,6 +4,7 @@ import (
 	"micro-warehouse/user-service/configs"
 	"micro-warehouse/user-service/controller"
 	"micro-warehouse/user-service/database"
+	"micro-warehouse/user-service/pkg/storage"
 	"micro-warehouse/user-service/repository"
 	"micro-warehouse/user-service/service"
 	"micro-warehouse/user-service/usecase"
@@ -12,22 +13,32 @@ import (
 )
 
 type Container struct {
-	RoleController controller.RoleControllerInterface
-	UserController controller.UserControllerInterface
-	AuthController controller.AuthControllerInterface
+	RoleController   controller.RoleControllerInterface
+	UserController   controller.UserControllerInterface
+	AuthController   controller.AuthControllerInterface
+	UploadController controller.UploadControllerInterface
 }
 
 func BuildContainer() *Container {
 	config := configs.NewConfig()
+
+	// Initialize database connection
 	db, err := database.ConnectionPostgres(*config)
 	if err != nil {
 		log.Fatalf("Failed to connect database: %v", err)
 	}
 
+	// Initialize rabbitmq service
 	rabbitMQService, err := service.NewRabbitMQService(*config)
 	if err != nil {
 		log.Fatalf("Failed to connect RabbitMQ service: %v", err)
 	}
+
+	// Initialize storage service and upload helper
+	supabaseStorage := storage.NewSupabaseStorage(*config)
+	fileUploadHelper := storage.NewFileUploadHelper(supabaseStorage, *config)
+
+	// Initialize repositories, usecases, and controllers
 
 	roleRepo := repository.NewRoleRepository(db.DB)
 	roleUsecase := usecase.NewRoleUsecase(roleRepo)
@@ -39,9 +50,12 @@ func BuildContainer() *Container {
 
 	authController := controller.NewAuthController(userUsecase)
 
+	uploadController := controller.NewUploadController(fileUploadHelper)
+
 	return &Container{
-		RoleController: roleController,
-		UserController: userController,
-		AuthController: authController,
+		RoleController:   roleController,
+		UserController:   userController,
+		AuthController:   authController,
+		UploadController: uploadController,
 	}
 }
