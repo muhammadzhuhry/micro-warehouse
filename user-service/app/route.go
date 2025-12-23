@@ -1,6 +1,8 @@
 package app
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"github.com/gofiber/fiber/v2"
+)
 
 func SetupRoutes(app *fiber.App, container *Container) {
 	api := app.Group("/api/v1")
@@ -20,6 +22,12 @@ func SetupRoutes(app *fiber.App, container *Container) {
 	users.Delete("/:id", container.UserController.DeleteUser)
 
 	users.Get("/role/:role_name", container.UserController.GetUserByRoleName)
+
+	assignRole := api.Group("/assign-role")
+	assignRole.Post("/", container.UserController.AssignUserToRole)
+	assignRole.Get("/", container.UserController.GetAllUserRoles)
+	assignRole.Get("/:id", container.UserController.GetUserRoleByID)
+	assignRole.Put("/id", container.UserController.EditAssignUserToRole)
 
 	auth := api.Group("/auth")
 	auth.Post("/login", container.AuthController.Login)
