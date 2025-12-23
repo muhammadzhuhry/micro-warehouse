@@ -27,21 +27,21 @@ type UserUsecaseInterface interface {
 }
 
 type userUsecase struct {
-	userRepo repository.UserRepositoryInterface
+	userRepo        repository.UserRepositoryInterface
 	rabbitMQService service.RabbitMQServiceInterface
 }
 
 // Constructor for UserUsecase
 func NewUserUsecase(userRepo repository.UserRepositoryInterface, rabbitMQService service.RabbitMQServiceInterface) UserUsecaseInterface {
 	return &userUsecase{
-		userRepo: userRepo,
+		userRepo:        userRepo,
 		rabbitMQService: rabbitMQService,
 	}
 }
 
 // AssignUserToRole implements UserUsecaseInterface.
 func (u *userUsecase) AssignUserToRole(ctx context.Context, userID uint, roleID uint) error {
-	return u.AssignUserToRole(ctx, userID, roleID)
+	return u.userRepo.AssignUserToRole(ctx, userID, roleID)
 }
 
 // CreateUser implements UserUsecaseInterface.
@@ -62,11 +62,11 @@ func (u *userUsecase) CreateUser(ctx context.Context, user model.User) error {
 	}
 
 	emailPayload := service.EmailPayload{
-		Email: result.Email,
+		Email:    result.Email,
 		Password: uncryptedPassword,
-		Type: "welcome_email",
-		UserID: result.ID,
-		Name: result.Name,
+		Type:     "welcome_email",
+		UserID:   result.ID,
+		Name:     result.Name,
 	}
 
 	go func() {
