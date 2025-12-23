@@ -50,7 +50,7 @@ func (r *roleController) CreateRole(c *fiber.Ctx) error {
 	}
 
 	reqModel := model.Role{
-		Name:        req.Name,
+		Name: req.Name,
 	}
 
 	if err := r.roleUsecase.CreateRole(ctx, reqModel); err != nil {
@@ -112,7 +112,7 @@ func (r *roleController) GetAllRoles(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"data": resp,
+		"data":    resp,
 		"message": "Roles fetched successfully",
 	})
 }
@@ -127,7 +127,7 @@ func (r *roleController) GetRoleByID(c *fiber.Ctx) error {
 			"message": "Role id is required",
 		})
 	}
-	
+
 	id := conv.StringToUint(roleID)
 	role, err := r.roleUsecase.GetRoleByID(ctx, id)
 	if err != nil {
@@ -138,7 +138,7 @@ func (r *roleController) GetRoleByID(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"data": role,
+		"data":    role,
 		"message": "Role fetched successfully",
 	})
 }
@@ -154,7 +154,7 @@ func (r *roleController) UpdateRole(c *fiber.Ctx) error {
 			"message": err.Error(),
 		})
 	}
-	
+
 	if err := validator.Validate(req); err != nil {
 		log.Errorf("[RoleController] UpdateRole - 2: %v", err)
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -163,8 +163,8 @@ func (r *roleController) UpdateRole(c *fiber.Ctx) error {
 	}
 
 	reqModel := model.Role{
-		ID:  conv.StringToUint(c.Params("id")),
-		Name:  req.Name,
+		ID:   conv.StringToUint(c.Params("id")),
+		Name: req.Name,
 	}
 
 	if err := r.roleUsecase.UpdateRole(ctx, reqModel); err != nil {
