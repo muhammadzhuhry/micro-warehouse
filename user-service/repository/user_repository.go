@@ -42,7 +42,7 @@ func NewUserRepository(db *gorm.DB) UserRepositoryInterface {
 // CreateUser Implements UserRepositoryInterface
 func (u *userRepository) CreateUser(ctx context.Context, user model.User) (*model.User, error) {
 	select {
-	case <- ctx.Done():
+	case <-ctx.Done():
 		log.Errorf("[UserRepository] CreatedUser - 1: %v", ctx.Err())
 		return nil, ctx.Err()
 	default:
@@ -65,7 +65,7 @@ func (u *userRepository) CreateUser(ctx context.Context, user model.User) (*mode
 // GetAllUsers Implements UserRepositoryInterface
 func (u *userRepository) GetAllUsers(ctx context.Context, page, limit int, search, sortBy, sortOrder string) ([]model.User, int64, error) {
 	select {
-	case <- ctx.Done():
+	case <-ctx.Done():
 		log.Errorf("[UserRepository] CreatedUser - 1: %v", ctx.Err())
 		return nil, 0, ctx.Err()
 	default:
@@ -75,7 +75,7 @@ func (u *userRepository) GetAllUsers(ctx context.Context, page, limit int, searc
 		page = 1
 	}
 
-	if limit <= 0 { 
+	if limit <= 0 {
 		limit = 10
 	}
 
@@ -118,7 +118,7 @@ func (u *userRepository) GetAllUsers(ctx context.Context, page, limit int, searc
 // GetUserByID Implements UserRepositoryInterface
 func (u *userRepository) GetUserByID(ctx context.Context, id uint) (*model.User, error) {
 	select {
-	case <- ctx.Done():
+	case <-ctx.Done():
 		log.Errorf("[UserRepository] GetUserByID - 1: %v", ctx.Err())
 		return nil, ctx.Err()
 	default:
@@ -136,7 +136,7 @@ func (u *userRepository) GetUserByID(ctx context.Context, id uint) (*model.User,
 // GetUserByEmail Implements UserRepositoryInterface
 func (u *userRepository) GetUserByEmail(ctx context.Context, email string) (*model.User, error) {
 	select {
-	case <- ctx.Done():
+	case <-ctx.Done():
 		log.Errorf("[UserRepository] GetUserByEmail - 1: %v", ctx.Err())
 		return nil, ctx.Err()
 	default:
@@ -154,7 +154,7 @@ func (u *userRepository) GetUserByEmail(ctx context.Context, email string) (*mod
 // UpdateUser Implements UserRepositoryInterface
 func (u *userRepository) UpdateUser(ctx context.Context, user model.User) error {
 	select {
-	case <- ctx.Done():
+	case <-ctx.Done():
 		log.Errorf("[UserRepository] UpdateUser - 1: %v", ctx.Err())
 		return ctx.Err()
 	default:
@@ -183,7 +183,7 @@ func (u *userRepository) UpdateUser(ctx context.Context, user model.User) error 
 // DeleteUser Implements UserRepositoryInterface
 func (u *userRepository) DeleteUser(ctx context.Context, id uint) error {
 	select {
-	case <- ctx.Done():
+	case <-ctx.Done():
 		log.Errorf("[UserRepository] CreatedUser - 1: %v", ctx.Err())
 		return ctx.Err()
 	default:
@@ -204,7 +204,7 @@ func (u *userRepository) DeleteUser(ctx context.Context, id uint) error {
 // GetUserByRoleName Implements UserRepositoryInterface
 func (u *userRepository) GetUserByRoleName(ctx context.Context, roleName string) ([]model.User, error) {
 	select {
-	case <- ctx.Done():
+	case <-ctx.Done():
 		log.Errorf("[UserRepository] GetUserByRoleName - 1: %v", ctx.Err())
 		return nil, ctx.Err()
 	default:
@@ -212,7 +212,6 @@ func (u *userRepository) GetUserByRoleName(ctx context.Context, roleName string)
 
 	users := []model.User{}
 
-	
 	subQuery := u.db.Table("user_roles").Select("user_role.user_id").Joins("JOIN roles ON user_role.role_id = roles.id").Where("roles.name = ?", roleName)
 
 	if err := u.db.WithContext(ctx).Where("id IN (?)", subQuery).Preload("Roles").Find(&users).Error; err != nil {
@@ -226,7 +225,7 @@ func (u *userRepository) GetUserByRoleName(ctx context.Context, roleName string)
 // AssignUserToRole Implements UserRepositoryInterface
 func (u *userRepository) AssignUserToRole(ctx context.Context, userID uint, roleID uint) error {
 	select {
-	case <- ctx.Done():
+	case <-ctx.Done():
 		log.Errorf("[UserRepository] AssignUserToRole - 1: %v", ctx.Err())
 		return ctx.Err()
 	default:
@@ -243,14 +242,14 @@ func (u *userRepository) AssignUserToRole(ctx context.Context, userID uint, role
 // EditAssignUserToRole Implements UserRepositoryInterface
 func (u *userRepository) EditAssignUserToRole(ctx context.Context, assignRoleID uint, userID uint, roleID uint) error {
 	select {
-	case <- ctx.Done():
+	case <-ctx.Done():
 		log.Errorf("[UserRepository] EditAssignUserToRole - 1: %v", ctx.Err())
 		return ctx.Err()
 	default:
 	}
 
 	userRole := model.UserRole{}
-	
+
 	// Check if assignment exists
 	if err := u.db.WithContext(ctx).Where("id = ?", assignRoleID).First(&userRole).Error; err != nil {
 		log.Errorf("[UserRepository] EditAssignUserToRole - 2: %v", err)
@@ -259,14 +258,14 @@ func (u *userRepository) EditAssignUserToRole(ctx context.Context, assignRoleID 
 
 	userRole.UserID = userID
 	userRole.RoleID = roleID
-	
+
 	return u.db.WithContext(ctx).Save(&userRole).Error
 }
 
 // GetUserRoleByID Implements UserRepositoryInterface
 func (u *userRepository) GetUserRoleByID(ctx context.Context, assignRoleID uint) (*model.UserRole, error) {
 	select {
-	case <- ctx.Done():
+	case <-ctx.Done():
 		log.Errorf("[UserRepository] GetUserRoleByID - 1: %v", ctx.Err())
 		return nil, ctx.Err()
 	default:
@@ -285,14 +284,14 @@ func (u *userRepository) GetUserRoleByID(ctx context.Context, assignRoleID uint)
 // GetAllUserRoles Implements UserRepositoryInterface
 func (u *userRepository) GetAllUserRoles(ctx context.Context, page, limit int, search, sortBy, sortOrder string) ([]model.UserRole, int64, error) {
 	select {
-	case <- ctx.Done():
+	case <-ctx.Done():
 		log.Errorf("[UserRepository] GetAllUserRoles - 1: %v", ctx.Err())
 		return nil, 0, ctx.Err()
 	default:
 	}
 
 	userRoles := []model.UserRole{}
-	
+
 	var totalRecords int64
 
 	// Build query
@@ -300,8 +299,8 @@ func (u *userRepository) GetAllUserRoles(ctx context.Context, page, limit int, s
 
 	// Apply search filter if provided
 	if search != "" {
-		query = query.Joins("JOIN users ON user_roles.user_id = users.id").
-			Joins("JOIN roles ON user_roles.role_id = roles.id").
+		query = query.Joins("JOIN users ON user_role.user_id = users.id").
+			Joins("JOIN roles ON user_role.role_id = roles.id").
 			Where("users.name ILIKE ? OR users.email ILIKE ? OR roles.name ILIKE ?", "%"+search+"%", "%"+search+"%", "%"+search+"%")
 	}
 
@@ -333,6 +332,3 @@ func (u *userRepository) GetAllUserRoles(ctx context.Context, page, limit int, s
 
 	return userRoles, totalRecords, nil
 }
-
-
-
