@@ -23,4 +23,7 @@ func SetupRoutes(app *fiber.App, container *Container) {
 
 	auth := api.Group("/auth")
 	auth.Post("/login", container.AuthController.Login)
+
+	upload := api.Group("/upload")
+	upload.Post("/photo", container.UploadController.UploadPhoto)
 }
