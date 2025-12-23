@@ -10,7 +10,6 @@ import (
 	"gorm.io/gorm"
 )
 
-
 type Postgres struct {
 	DB *gorm.DB
 }
@@ -31,7 +30,7 @@ func ConnectionPostgres(cfg configs.Config) (*Postgres, error) {
 		log.Errorf("[Postgres] ConnectionPostgres - 2: %v", err)
 		return nil, err
 	}
-	
+
 	// Seed = insert initial data
 	SeedRole(db)
 	SeedManager(db)
