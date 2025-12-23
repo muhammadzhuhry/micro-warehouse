@@ -21,7 +21,7 @@ func RunServer() {
 	cfg := configs.NewConfig()
 
 	app := fiber.New(fiber.Config{
-		ErrorHandler: func(c *fiber.Ctx, err error) error  {
+		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			zerolog.Printf("Error: %v", err)
 			return c.Status(fiber.StatusInternalServerError).SendString("Internal Server Error")
 		},
@@ -30,7 +30,7 @@ func RunServer() {
 	app.Use(recover.New())
 	app.Use(cors.New())
 	app.Use(logger.New(logger.Config{
-		Format: "[${time}] $ip ${status} - ${latency} ${method} ${path}\n",
+		Format: "[${time}] ${ip} ${status} - ${latency} ${method} ${path}\n",
 	}))
 
 	container := BuildContainer()
