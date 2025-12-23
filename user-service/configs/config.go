@@ -10,31 +10,31 @@ type App struct {
 }
 
 type SqlDB struct {
-	Host     			string `json:"host"`
-	Port     			string `json:"port"`
-	User     			string `json:"user"`
-	Password 			string `json:"password"`
-	DBName   			string `json:"db_name"`
-	DBMaxOpenConns    	int    `json:"db_max_open_conns"`
-	DBMaxIdleConns    	int    `json:"db_max_idle_conns"`
+	Host           string `json:"host"`
+	Port           string `json:"port"`
+	User           string `json:"user"`
+	Password       string `json:"password"`
+	DBName         string `json:"db_name"`
+	DBMaxOpenConns int    `json:"db_max_open_conns"`
+	DBMaxIdleConns int    `json:"db_max_idle_conns"`
 }
 
 type Redis struct {
-	Host     string `json:"host"`
-	Port	 string `json:"port"`
+	Host string `json:"host"`
+	Port string `json:"port"`
 }
 
 type RabbitMQ struct {
-	Host	 string `json:"host"`
-	Port	 string `json:"port"`
+	Host     string `json:"host"`
+	Port     string `json:"port"`
 	Username string `json:"username"`
 	Password string `json:"password"`
 }
 
-type SupaBase struct {
-	Url   	string `json:"url"`
-	Key 	string `json:"key"`
-	Bucket 	string `json:"bucket"`
+type Supabase struct {
+	Url    string `json:"url"`
+	Key    string `json:"key"`
+	Bucket string `json:"bucket"`
 }
 
 type Config struct {
@@ -42,21 +42,21 @@ type Config struct {
 	SqlDB    SqlDB    `json:"sql_db"`
 	Redis    Redis    `json:"redis"`
 	RabbitMQ RabbitMQ `json:"rabbit_mq"`
-	SupaBase SupaBase `json:"supa_base"`
+	Supabase Supabase `json:"supa_base"`
 }
 
 func NewConfig() *Config {
 	return &Config{
 		App: App{
 			AppPort: viper.GetString("APP_PORT"),
-			AppEnv: viper.GetString("APP_ENV"),
+			AppEnv:  viper.GetString("APP_ENV"),
 		},
 		SqlDB: SqlDB{
-			Host: viper.GetString("DATABASE_HOST"),
-			Port: viper.GetString("DATABASE_PORT"),
-			User: viper.GetString("DATABASE_USER"),
-			Password: viper.GetString("DATABASE_PASSWORD"),
-			DBName: viper.GetString("DATABASE_NAME"),
+			Host:           viper.GetString("DATABASE_HOST"),
+			Port:           viper.GetString("DATABASE_PORT"),
+			User:           viper.GetString("DATABASE_USER"),
+			Password:       viper.GetString("DATABASE_PASSWORD"),
+			DBName:         viper.GetString("DATABASE_NAME"),
 			DBMaxOpenConns: viper.GetInt("DATABASE_MAX_OPEN_CONNS"),
 			DBMaxIdleConns: viper.GetInt("DATABASE_MAX_IDLE_CONNS"),
 		},
@@ -65,14 +65,14 @@ func NewConfig() *Config {
 			Port: viper.GetString("REDIS_PORT"),
 		},
 		RabbitMQ: RabbitMQ{
-			Host: viper.GetString("RABBITMQ_HOST"),
-			Port: viper.GetString("RABBITMQ_PORT"),
+			Host:     viper.GetString("RABBITMQ_HOST"),
+			Port:     viper.GetString("RABBITMQ_PORT"),
 			Username: viper.GetString("RABBITMQ_USERNAME"),
 			Password: viper.GetString("RABBITMQ_PASSWORD"),
 		},
-		SupaBase: SupaBase{
-			Url: viper.GetString("SUPABASE_URL"),
-			Key: viper.GetString("SUPABASE_KEY"),
+		Supabase: Supabase{
+			Url:    viper.GetString("SUPABASE_URL"),
+			Key:    viper.GetString("SUPABASE_KEY"),
 			Bucket: viper.GetString("SUPABASE_BUCKET"),
 		},
 	}
