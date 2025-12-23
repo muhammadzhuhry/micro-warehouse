@@ -23,3 +23,7 @@ func StringToUint(s string) uint {
 	}
 	return uint(id)
 }
+
+func IntToFloat64(i int) float64 {
+	return float64(i)
+}
