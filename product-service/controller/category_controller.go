@@ -129,10 +129,11 @@ func (c *categoryController) GetAllCategories(ctx *fiber.Ctx) error {
 	resp := []response.CategoryResponse{}
 	for _, category := range categories {
 		resp = append(resp, response.CategoryResponse{
-			ID:      category.ID,
-			Name:    category.Name,
-			Tagline: category.Tagline,
-			Photo:   category.Photo,
+			ID:            category.ID,
+			Name:          category.Name,
+			Tagline:       category.Tagline,
+			Photo:         category.Photo,
+			CountProducts: len(category.Products),
 		})
 	}
 
