@@ -7,7 +7,7 @@ type CreateProductRequest struct {
 	Thumbnail  string `json:"thumbnail" validate:"required"`
 	About      string `json:"about" validate:"required"`
 	Price      int    `json:"price" validate:"required"`
-	IsPopular  bool   `json:"is_popular" validate:"required"`
+	IsPopular  bool   `json:"is_popular"`
 }
 
 type GetAllProductsRequest struct {
