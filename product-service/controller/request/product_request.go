@@ -3,7 +3,7 @@ package request
 type CreateProductRequest struct {
 	Name       string `json:"name" validate:"required"`
 	Barcode    string `json:"barcode" validate:"required"`
-	CategoryID string `json:"category_id" validate:"required"`
+	CategoryID uint   `json:"category_id" validate:"required"`
 	Thumbnail  string `json:"thumbnail" validate:"required"`
 	About      string `json:"about" validate:"required"`
 	Price      int    `json:"price" validate:"required"`
