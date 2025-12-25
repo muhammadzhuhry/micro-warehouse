@@ -6,8 +6,8 @@ import (
 	"micro-warehouse/product-service/model"
 	"micro-warehouse/product-service/pkg/conv"
 	"micro-warehouse/product-service/pkg/pagination"
+	"micro-warehouse/product-service/pkg/validator"
 	"micro-warehouse/product-service/usecase"
-	"micro-warehouse/product-service/validator"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
