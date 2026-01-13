@@ -6,6 +6,7 @@ import (
 	"micro-warehouse/warehouse-service/controller"
 	"micro-warehouse/warehouse-service/database"
 	"micro-warehouse/warehouse-service/pkg/httpclient"
+	"micro-warehouse/warehouse-service/pkg/rabbitmq"
 	"micro-warehouse/warehouse-service/pkg/redis"
 	"micro-warehouse/warehouse-service/pkg/storage"
 	"micro-warehouse/warehouse-service/repository"
@@ -16,6 +17,7 @@ type Container struct {
 	WarehouseController        controller.WarehouseControllerInterface
 	WarehouseProductController controller.WarehouseProductControllerInterface
 	UploadController           controller.UploadControllerInterface
+	RabbitMQConsumer           *rabbitmq.RabbitMQConsumer
 }
 
 func BuildContainer() *Container {
@@ -44,9 +46,15 @@ func BuildContainer() *Container {
 
 	uploadController := controller.NewUploadController(fileUploadHelper)
 
+	rabbitMQConsumer, err := rabbitmq.NewRabbitMQConsumer(config.RabbitMQ.URL(), warehouseProductRepo)
+	if err != nil {
+		log.Fatalf("Failed to initialize RabbitMQ consumer: %v", err)
+	}
+
 	return &Container{
 		WarehouseController:        warehouseController,
 		WarehouseProductController: warehouseProductController,
 		UploadController:           uploadController,
+		RabbitMQConsumer:           rabbitMQConsumer,
 	}
 }
