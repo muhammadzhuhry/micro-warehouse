@@ -6,6 +6,7 @@ import (
 	"micro-warehouse/warehouse-service/controller"
 	"micro-warehouse/warehouse-service/database"
 	"micro-warehouse/warehouse-service/pkg/httpclient"
+	"micro-warehouse/warehouse-service/pkg/redis"
 	"micro-warehouse/warehouse-service/pkg/storage"
 	"micro-warehouse/warehouse-service/repository"
 	"micro-warehouse/warehouse-service/usecase"
@@ -26,6 +27,8 @@ func BuildContainer() *Container {
 		log.Fatalf("Failed to connect database: %v", err)
 	}
 
+	redisClient := redis.NewRedisClient(*config)
+
 	supabaseStorage := storage.NewSupabaseStorage(*config)
 	fileUploadHelper := storage.NewFileUploadHelper(supabaseStorage, *config)
 
@@ -35,7 +38,8 @@ func BuildContainer() *Container {
 
 	warehouseProductRepo := repository.NewWarehouseProductRepository(db.DB)
 	productClient := httpclient.NewProductClient(*config)
-	warehouseProductUsecase := usecase.NewWarehouseProductUsecase(warehouseProductRepo, productClient)
+	cachedProductClient := httpclient.NewCachedProductClient(productClient, redisClient)
+	warehouseProductUsecase := usecase.NewWarehouseProductUsecase(warehouseProductRepo, cachedProductClient)
 	warehouseProductController := controller.NewWarehouseProductController(warehouseProductUsecase)
 
 	uploadController := controller.NewUploadController(fileUploadHelper)
