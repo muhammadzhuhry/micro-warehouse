@@ -3,7 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
-	"micro-warehouse/product-service/configs"
+	"micro-warehouse/warehouse-service/configs"
 	"mime/multipart"
 	"path/filepath"
 	"strings"

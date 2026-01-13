@@ -3,7 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
-	"micro-warehouse/product-service/configs"
+	"micro-warehouse/warehouse-service/configs"
 	"mime/multipart"
 	"path/filepath"
 	"strings"
@@ -16,7 +16,7 @@ const (
 
 	AllowedImageExtensions = ".jpg,.jpeg,.png,.webp,.svg"
 
-	BucketProducts = "products"
+	BucketWarehouses = "warehouses"
 )
 
 type FileUploadHelper struct {
@@ -37,7 +37,7 @@ func (f *FileUploadHelper) UploadPhoto(ctx context.Context, file *multipart.File
 		return nil, err
 	}
 
-	result, err := f.storage.UploadFile(ctx, file, BucketProducts)
+	result, err := f.storage.UploadFile(ctx, file, BucketWarehouses)
 	if err != nil {
 		log.Errorf("failed to upload file: %v", err)
 		return nil, err
