@@ -293,6 +293,7 @@ func (w *WarehouseProductController) GetWarehouseProductByWarehouseIDAndProductI
 func (w *WarehouseProductController) UpdateWarehouseProduct(c *fiber.Ctx) error {
 	ctx := c.Context()
 	warehouseProductID := conv.StringToUint(c.Params("warehouse_product_id"))
+	warehouseID := conv.StringToUint(c.Params("warehouse_id"))
 
 	req := request.CreateWarehouseProductRequest{}
 	if err := c.BodyParser(&req); err != nil {
@@ -311,7 +312,7 @@ func (w *WarehouseProductController) UpdateWarehouseProduct(c *fiber.Ctx) error 
 
 	reqModel := model.WarehouseProduct{
 		ID:          warehouseProductID,
-		WarehouseID: req.WarehouseID,
+		WarehouseID: warehouseID,
 		ProductID:   req.ProductID,
 		Stock:       req.Stock,
 	}
