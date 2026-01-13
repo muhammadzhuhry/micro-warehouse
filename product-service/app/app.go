@@ -2,7 +2,7 @@ package app
 
 import (
 	"context"
-	"micro-warehouse/user-service/configs"
+	"micro-warehouse/product-service/configs"
 	"os"
 	"os/signal"
 	"syscall"
