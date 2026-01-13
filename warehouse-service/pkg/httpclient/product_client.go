@@ -6,7 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"micro-warehouse/warehouse-service/configs"
 	"net/http"
+	"time"
 
 	"github.com/gofiber/fiber/v2/log"
 )
@@ -48,10 +50,19 @@ type ProductListResponse struct {
 	Error   string            `json:"error,omitempty"`
 }
 
-func NewProductClient(urlProductService string, httpClient *http.Client) ProductClientInterface {
+// func NewProductClient(urlProductService string, httpClient *http.Client) ProductClientInterface {
+// 	return &ProductClient{
+// 		urlProductService: urlProductService,
+// 		httpClient:        httpClient,
+// 	}
+// }
+
+func NewProductClient(cfg configs.Config) ProductClientInterface {
 	return &ProductClient{
-		urlProductService: urlProductService,
-		httpClient:        httpClient,
+		urlProductService: cfg.App.UrlProductService,
+		httpClient: &http.Client{
+			Timeout: 30 * time.Second,
+		},
 	}
 }
 
