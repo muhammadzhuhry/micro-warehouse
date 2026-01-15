@@ -31,6 +31,7 @@ func (rc *RedisClient) Ping(ctx context.Context) error {
 		log.Errorf("[RedisClient] Ping - 1: %v", err)
 		return err
 	}
+
 	return nil
 }
 
@@ -62,6 +63,7 @@ func (rc *RedisClient) Set(ctx context.Context, key string, value interface{}, e
 		log.Errorf("[RedisClient] Set - 2: %v", err)
 		return err
 	}
+
 	return nil
 }
 
@@ -71,36 +73,40 @@ func (rc *RedisClient) Delete(ctx context.Context, key string) error {
 		log.Errorf("[RedisClient] Delete - 1: %v", err)
 		return err
 	}
+
 	return nil
 }
 
 func (rc *RedisClient) Exists(ctx context.Context, key string) (bool, error) {
-	result, err := rc.client.Exists(ctx, key).Result()
+	exists, err := rc.client.Exists(ctx, key).Result()
 	if err != nil {
 		log.Errorf("[RedisClient] Exists - 1: %v", err)
 		return false, err
 	}
-	return result > 0, nil
+
+	return exists > 0, nil
 }
 
 func (rc *RedisClient) TTL(ctx context.Context, key string) (time.Duration, error) {
-	duration, err := rc.client.TTL(ctx, key).Result()
+	ttl, err := rc.client.TTL(ctx, key).Result()
 	if err != nil {
 		log.Errorf("[RedisClient] TTL - 1: %v", err)
 		return 0, err
 	}
-	return duration, nil
+
+	return ttl, nil
 }
 
 func (rc *RedisClient) Close(ctx context.Context) error {
 	return rc.client.Close()
 }
 
-func (rc *RedisClient) Flush(ctx context.Context) error {
-	err := rc.client.FlushDB(ctx).Err()
+func (rc *RedisClient) FlushAll(ctx context.Context) error {
+	err := rc.client.FlushAll(ctx).Err()
 	if err != nil {
-		log.Errorf("[RedisClient] Flush - 1: %v", err)
+		log.Errorf("[RedisClient] FlushAll - 1: %v", err)
 		return err
 	}
+
 	return nil
 }
