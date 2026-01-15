@@ -23,26 +23,26 @@ func NewCachedWarehouseClient(warehouseClient WarehouseClientInterface, redisCli
 	}
 }
 
-func (cpc *CachedWarehouseClient) generateCacheKey(prefix string, id uint) string {
+func (cwc *CachedWarehouseClient) generateCacheKey(prefix string, id uint) string {
 	return fmt.Sprintf("warehouse:%s:%d", prefix, id)
 }
 
-func (cpc *CachedWarehouseClient) GetWarehouseByID(ctx context.Context, warehouseID uint) (*WarehouseResponse, error) {
-	cacheKey := cpc.generateCacheKey("single", warehouseID)
+func (cwc *CachedWarehouseClient) GetWarehouseByID(ctx context.Context, warehouseID uint) (*WarehouseResponse, error) {
+	cacheKey := cwc.generateCacheKey("single", warehouseID)
 
 	var cachedWarehouse WarehouseResponse
-	if err := cpc.redis.Get(ctx, cacheKey, &cachedWarehouse); err == nil {
-		log.Errorf("[CachedWarehouseClient] GetWarehouseByID - 1: %v", err)
+	if err := cwc.redis.Get(ctx, cacheKey, &cachedWarehouse); err == nil {
+		log.Infof("[CachedWarehouseClient] GetWarehouseByID - 1: %v", cachedWarehouse)
 		return &cachedWarehouse, nil
 	}
 
-	warehouse, err := cpc.client.GetWarehouseByID(ctx, warehouseID)
+	warehouse, err := cwc.client.GetWarehouseByID(ctx, warehouseID)
 	if err != nil {
 		log.Errorf("[CachedWarehouseClient] GetWarehouseByID - 2: %v", err)
 		return nil, err
 	}
 
-	err = cpc.redis.Set(ctx, cacheKey, warehouse, cpc.ttl)
+	err = cwc.redis.Set(ctx, cacheKey, warehouse, cwc.ttl)
 	if err != nil {
 		log.Errorf("[CachedWarehouseClient] GetWarehouseByID - 3: %v", err)
 		return nil, err
@@ -51,26 +51,26 @@ func (cpc *CachedWarehouseClient) GetWarehouseByID(ctx context.Context, warehous
 	return warehouse, nil
 }
 
-func (cpc *CachedWarehouseClient) GetWarehouseProductStock(ctx context.Context, warehouseID, productID uint) (*WarehouseProductStockResponse, error) {
-	cacheKey := cpc.generateCacheKey("single", warehouseID)
+func (cwc *CachedWarehouseClient) GetWarehouseProductStock(ctx context.Context, warehouseID uint, productID uint) (*WarehouseProductStockResponse, error) {
+	cacheKey := cwc.generateCacheKey("single", warehouseID)
 
-	var cachedStock WarehouseProductStockResponse
-	if err := cpc.redis.Get(ctx, cacheKey, &cachedStock); err == nil {
-		log.Errorf("[CachedWarehouseClient] GetWarehouseProductStock - 1: %v", err)
-		return &cachedStock, nil
+	var cachedWarehouseProductStock WarehouseProductStockResponse
+	if err := cwc.redis.Get(ctx, cacheKey, &cachedWarehouseProductStock); err == nil {
+		log.Infof("[CachedWarehouseClient] GetWarehouseProductStock - 1: %v", cachedWarehouseProductStock)
+		return &cachedWarehouseProductStock, nil
 	}
 
-	stock, err := cpc.client.GetWarehouseProductStock(ctx, warehouseID, productID)
+	warehouseProductStock, err := cwc.client.GetWarehouseProductStock(ctx, warehouseID, productID)
 	if err != nil {
 		log.Errorf("[CachedWarehouseClient] GetWarehouseProductStock - 2: %v", err)
 		return nil, err
 	}
 
-	err = cpc.redis.Set(ctx, cacheKey, stock, cpc.ttl)
+	err = cwc.redis.Set(ctx, cacheKey, warehouseProductStock, cwc.ttl)
 	if err != nil {
 		log.Errorf("[CachedWarehouseClient] GetWarehouseProductStock - 3: %v", err)
 		return nil, err
 	}
 
-	return stock, nil
+	return warehouseProductStock, nil
 }

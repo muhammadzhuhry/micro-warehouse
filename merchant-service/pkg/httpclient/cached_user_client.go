@@ -23,34 +23,26 @@ func NewCachedUserClient(userClient UserClientInterface, redisClient *redis.Redi
 	}
 }
 
-func (cpc *CachedUserClient) generateCacheKey(prefix string, id uint) string {
+func (cuc *CachedUserClient) generateCacheKey(prefix string, id uint) string {
 	return fmt.Sprintf("user:%s:%d", prefix, id)
 }
 
-func (cpc *CachedUserClient) generateCacheKeyMultiple(prefix string, ids []uint) string {
-	key := fmt.Sprintf("user:%s", prefix)
-	for _, id := range ids {
-		key += fmt.Sprintf(":%d,", id)
-	}
-	return key[:len(key)-1]
-}
-
-func (cpc *CachedUserClient) GetUserByID(ctx context.Context, id uint) (*UserResponse, error) {
-	cacheKey := cpc.generateCacheKey("single", id)
+func (cuc *CachedUserClient) GetUserByID(ctx context.Context, userID uint) (*UserResponse, error) {
+	cacheKey := cuc.generateCacheKey("single", userID)
 
 	var cachedUser UserResponse
-	if err := cpc.redis.Get(ctx, cacheKey, &cachedUser); err != nil {
-		log.Infof("[CachedUserClient] GetUserByID - 1: %v", err)
+	if err := cuc.redis.Get(ctx, cacheKey, &cachedUser); err == nil {
+		log.Infof("[CachedUserClient] GetUserByID - 1: %v", cachedUser)
 		return &cachedUser, nil
 	}
 
-	user, err := cpc.client.GetUserByID(ctx, id)
+	user, err := cuc.client.GetUserByID(ctx, userID)
 	if err != nil {
 		log.Errorf("[CachedUserClient] GetUserByID - 2: %v", err)
 		return nil, err
 	}
 
-	err = cpc.redis.Set(ctx, cacheKey, user, cpc.ttl)
+	err = cuc.redis.Set(ctx, cacheKey, user, cuc.ttl)
 	if err != nil {
 		log.Errorf("[CachedUserClient] GetUserByID - 3: %v", err)
 		return nil, err

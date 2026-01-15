@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io"
 	"micro-warehouse/merchant-service/configs"
+	"micro-warehouse/merchant-service/pkg/jwt"
+
 	"net/http"
 	"time"
 
@@ -21,8 +23,188 @@ type ProductClientInterface interface {
 }
 
 type ProductClient struct {
-	urlProductService string
-	httpClient        *http.Client
+	UrlApiGateway string
+	httpClient    *http.Client
+	config        configs.Config
+}
+
+func (p *ProductClient) generateInternalToken() (string, error) {
+	return jwt.GenerateInternalToken(p.config)
+}
+
+// GetProductByBarcode implements ProductClientInterface.
+func (p *ProductClient) GetProductByBarcode(ctx context.Context, barcode string) (*ProductResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/products/barcode/%s", p.UrlApiGateway, barcode)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		log.Errorf("[ProductClient] GetProductByBarcode - 1: %v", err)
+		return nil, err
+	}
+
+	token, err := p.generateInternalToken()
+
+	if err != nil {
+		log.Errorf("[ProductClient] GetProductByBarcode - 2: %v", err)
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("X-Internal-Request", "true")
+	req.Header.Set("X-Gateway", "warehouse-api-gateway")
+
+	resp, err := p.httpClient.Do(req)
+	if err != nil {
+		log.Errorf("[ProductClient] GetProductByBarcode - 3: %v", err)
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Errorf("[ProductClient] GetProductByBarcode - 4: %v", err)
+		return nil, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		log.Errorf("[ProductClient] GetProductByBarcode - 5: %s", string(body))
+		return nil, errors.New("failed to get product by barcode")
+	}
+
+	var productResponse ProductServiceResponse
+	if err := json.Unmarshal(body, &productResponse); err != nil {
+		log.Errorf("[ProductClient] GetProductByBarcode - 6: %v", err)
+		return nil, err
+	}
+
+	return &productResponse.Data, nil
+}
+
+// GetProductByID implements ProductClientInterface.
+func (p *ProductClient) GetProductByID(ctx context.Context, productID uint) (*ProductResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/products/%d", p.UrlApiGateway, productID)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		log.Errorf("[ProductClient] GetProductByID - 1: %v", err)
+		return nil, err
+	}
+
+	token, err := p.generateInternalToken()
+
+	if err != nil {
+		log.Errorf("[ProductClient] GetProductByID - 2: %v", err)
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("X-Internal-Request", "true")
+	req.Header.Set("X-Gateway", "warehouse-api-gateway")
+
+	resp, err := p.httpClient.Do(req)
+	if err != nil {
+		log.Errorf("[ProductClient] GetProductByID - 3: %v", err)
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Errorf("[ProductClient] GetProductByID - 4: %v", err)
+		return nil, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		log.Errorf("[ProductClient] GetProductByID - 5: %s", string(body))
+		return nil, errors.New("failed to get product by id")
+	}
+
+	var productResponse ProductServiceResponse
+	if err := json.Unmarshal(body, &productResponse); err != nil {
+		log.Errorf("[ProductClient] GetProductByID - 6: %v", err)
+		return nil, err
+	}
+
+	return &productResponse.Data, nil
+}
+
+// GetProducts implements ProductClientInterface.
+func (p *ProductClient) GetProducts(ctx context.Context, page int, limit int, search string, sortBy string, sortOrder string) ([]ProductResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/products?page=%d&limit=%d&search=%s&sort_by=%s&sort_order=%s", p.UrlApiGateway, page, limit, search, sortBy, sortOrder)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		log.Errorf("[ProductClient] GetProducts - 1: %v", err)
+		return nil, err
+	}
+
+	token, err := p.generateInternalToken()
+
+	if err != nil {
+		log.Errorf("[ProductClient] GetProducts - 2: %v", err)
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("X-Internal-Request", "true")
+	req.Header.Set("X-Gateway", "warehouse-api-gateway")
+
+	resp, err := p.httpClient.Do(req)
+	if err != nil {
+		log.Errorf("[ProductClient] GetProducts - 3: %v", err)
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Errorf("[ProductClient] GetProducts - 4: %v", err)
+		return nil, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		log.Errorf("[ProductClient] GetProducts - 5: %s", string(body))
+		return nil, errors.New("failed to get products")
+	}
+
+	var productListResponse ProductListResponse
+	if err := json.Unmarshal(body, &productListResponse); err != nil {
+		log.Errorf("[ProductClient] GetProducts - 6: %v", err)
+		return nil, err
+	}
+
+	return productListResponse.Data, nil
+}
+
+// HealthCheck implements ProductClientInterface.
+func (p *ProductClient) HealthCheck(ctx context.Context) error {
+	url := fmt.Sprintf("%s/health", p.UrlApiGateway)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		log.Errorf("[ProductClient] HealthCheck - 1: %v", err)
+		return err
+	}
+
+	resp, err := p.httpClient.Do(req)
+	if err != nil {
+		log.Errorf("[ProductClient] HealthCheck - 2: %v", err)
+		return err
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return errors.New("failed to get health check")
+	}
+
+	return nil
 }
 
 type ProductResponse struct {
@@ -51,158 +233,8 @@ type ProductListResponse struct {
 	Error   string            `json:"error,omitempty"`
 }
 
-// func NewProductClient(urlProductService string, httpClient *http.Client) ProductClientInterface {
-// 	return &ProductClient{
-// 		urlProductService: urlProductService,
-// 		httpClient:        httpClient,
-// 	}
-// }
-
 func NewProductClient(cfg configs.Config) ProductClientInterface {
-	return &ProductClient{
-		urlProductService: cfg.App.UrlProductService,
-		httpClient: &http.Client{
-			Timeout: 30 * time.Second,
-		},
-	}
-}
-
-// GetProductByID implements [ProductClientInterface].
-func (p *ProductClient) GetProductByID(ctx context.Context, productID uint) (*ProductResponse, error) {
-	url := fmt.Sprintf("%s/api/v1/products/%d", p.urlProductService, productID)
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		log.Errorf("[ProductClient] GetProductByID - 1: %v", err)
-		return nil, err
-	}
-
-	resp, err := p.httpClient.Do(req)
-	if err != nil {
-		log.Errorf("[ProductClient] GetProductByID - 2: %v", err)
-		return nil, err
-	}
-
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Errorf("[ProductClient] GetProductByID - 3: %v", err)
-		return nil, err
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		log.Errorf("[ProductClient] GetProductByID - 4: %s", string(body))
-		return nil, errors.New("failed to get product by id")
-	}
-
-	productResponse := ProductServiceResponse{}
-	if err := json.Unmarshal(body, &productResponse); err != nil {
-		log.Errorf("[ProductClient] GetProductByID - 5: %v", err)
-		return nil, err
-	}
-
-	return &productResponse.Data, nil
-}
-
-// GetProductByBarcode implements [ProductClientInterface].
-func (p *ProductClient) GetProductByBarcode(ctx context.Context, barcode string) (*ProductResponse, error) {
-	url := fmt.Sprintf("%s/api/v1/products/barcode/%s", p.urlProductService, barcode)
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		log.Errorf("[ProductClient] GetProductByBarcode - 1: %v", err)
-		return nil, err
-	}
-
-	resp, err := p.httpClient.Do(req)
-	if err != nil {
-		log.Errorf("[ProductClient] GetProductByBarcode - 2: %v", err)
-		return nil, err
-	}
-
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Errorf("[ProductClient] GetProductByBarcode - 3: %v", err)
-		return nil, err
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		log.Errorf("[ProductClient] GetProductByBarcode - 4: %s", string(body))
-		return nil, errors.New("failed to get product by barcode")
-	}
-
-	productResponse := ProductServiceResponse{}
-	if err := json.Unmarshal(body, &productResponse); err != nil {
-		log.Errorf("[ProductClient] GetProductByBarcode - 5: %v", err)
-		return nil, err
-	}
-
-	return &productResponse.Data, nil
-}
-
-// GetProducts implements [ProductClientInterface].
-func (p *ProductClient) GetProducts(ctx context.Context, page int, limit int, search string, sortBy string, sortOrder string) ([]ProductResponse, error) {
-	url := fmt.Sprintf("%s/api/v1/products?page=%d&limit=%d&search=%s&sortBy=%s&sortOrder=%s", p.urlProductService, page, limit, search, sortBy, sortOrder)
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		log.Errorf("[ProductClient] GetProducts - 1: %v", err)
-		return nil, err
-	}
-
-	defer req.Body.Close()
-
-	resp, err := p.httpClient.Do(req)
-	if err != nil {
-		log.Errorf("[ProductClient] GetProducts - 2: %v", err)
-		return nil, err
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Errorf("[ProductClient] GetProducts - 3: %v", err)
-		return nil, err
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		log.Errorf("[ProductClient] GetProducts - 4: %s", string(body))
-		return nil, errors.New("failed to get products")
-	}
-
-	productListResponse := ProductListResponse{}
-	if err := json.Unmarshal(body, &productListResponse); err != nil {
-		log.Errorf("[ProductClient] GetProducts - 5: %v", err)
-		return nil, err
-	}
-
-	return productListResponse.Data, nil
-}
-
-// HealthCheck implements [ProductClientInterface].
-func (p *ProductClient) HealthCheck(ctx context.Context) error {
-	url := fmt.Sprintf("%s/api/v1/health", p.urlProductService)
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		log.Errorf("[ProductClient] HealthCheck - 1: %v", err)
-		return err
-	}
-
-	resp, err := p.httpClient.Do(req)
-	if err != nil {
-		log.Errorf("[ProductClient] HealthCheck - 2: %v", err)
-		return err
-	}
-
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		log.Errorf("[ProductClient] HealthCheck - 3: status code %d", resp.StatusCode)
-		return errors.New("product service is unhealthy")
-	}
-
-	return nil
+	return &ProductClient{httpClient: &http.Client{
+		Timeout: 30 * time.Second,
+	}, UrlApiGateway: cfg.App.UrlApiGateway}
 }

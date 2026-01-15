@@ -30,21 +30,21 @@ func (cpc *CachedProductClient) generateCacheKey(prefix string, id uint) string 
 func (cpc *CachedProductClient) generateCacheKeyMultiple(prefix string, ids []uint) string {
 	key := fmt.Sprintf("product:%s", prefix)
 	for _, id := range ids {
-		key += fmt.Sprintf(":%d,", id)
+		key += fmt.Sprintf(":%d", id)
 	}
 	return key[:len(key)-1]
 }
 
-func (cpc *CachedProductClient) GetProductByID(ctx context.Context, id uint) (*ProductResponse, error) {
-	cacheKey := cpc.generateCacheKey("single", id)
+func (cpc *CachedProductClient) GetProductByID(ctx context.Context, productID uint) (*ProductResponse, error) {
+	cacheKey := cpc.generateCacheKey("single", productID)
 
 	var cachedProduct ProductResponse
-	if err := cpc.redis.Get(ctx, cacheKey, &cachedProduct); err != nil {
-		log.Infof("[CachedProductClient] GetProductByID - 1: %v", err)
+	if err := cpc.redis.Get(ctx, cacheKey, &cachedProduct); err == nil {
+		log.Infof("[CachedProductClient] GetProductByID - 1: %v", cachedProduct)
 		return &cachedProduct, nil
 	}
 
-	product, err := cpc.client.GetProductByID(ctx, id)
+	product, err := cpc.client.GetProductByID(ctx, productID)
 	if err != nil {
 		log.Errorf("[CachedProductClient] GetProductByID - 2: %v", err)
 		return nil, err
@@ -63,8 +63,8 @@ func (cpc *CachedProductClient) GetProductByBarcode(ctx context.Context, barcode
 	cacheKey := fmt.Sprintf("product:barcode:%s", barcode)
 
 	var cachedProduct ProductResponse
-	if err := cpc.redis.Get(ctx, cacheKey, &cachedProduct); err != nil {
-		log.Infof("[CachedProductClient] GetProductByBarcode - 1: %v", err)
+	if err := cpc.redis.Get(ctx, cacheKey, &cachedProduct); err == nil {
+		log.Infof("[CachedProductClient] GetProductByBarcode - 1: %v", cachedProduct)
 		return &cachedProduct, nil
 	}
 

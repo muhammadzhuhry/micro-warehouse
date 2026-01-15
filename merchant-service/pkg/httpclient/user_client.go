@@ -3,9 +3,11 @@ package httpclient
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"micro-warehouse/merchant-service/configs"
+	"micro-warehouse/merchant-service/pkg/jwt"
 	"net/http"
 	"time"
 
@@ -17,8 +19,63 @@ type UserClientInterface interface {
 }
 
 type UserClient struct {
-	urlUserService string
-	httpClient     *http.Client
+	UrlApiGateway string
+	httpClient    *http.Client
+	config        configs.Config
+}
+
+func (u *UserClient) generateInternalToken() (string, error) {
+	return jwt.GenerateInternalToken(u.config)
+}
+
+// GetUserByID implements UserClientInterface.
+func (u *UserClient) GetUserByID(ctx context.Context, userID uint) (*UserResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/users/%d", u.UrlApiGateway, userID)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		log.Errorf("[UserClient] GetUserByID - 1: %v", err)
+		return nil, err
+	}
+
+	token, err := u.generateInternalToken()
+
+	if err != nil {
+		log.Errorf("[ProductClient] GetProductByID - 1: %v", err)
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("X-Internal-Request", "true")
+	req.Header.Set("X-Gateway", "warehouse-api-gateway")
+
+	resp, err := u.httpClient.Do(req)
+	if err != nil {
+		log.Errorf("[UserClient] GetUserByID - 2: %v", err)
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Errorf("[UserClient] GetUserByID - 3: %v", err)
+		return nil, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		log.Errorf("[UserClient] GetUserByID - 4: %s", string(body))
+		return nil, errors.New("failed to get user by id")
+	}
+
+	var userResponse UserServiceResponse
+	if err := json.Unmarshal(body, &userResponse); err != nil {
+		log.Errorf("[UserClient] GetUserByID - 5: %v", err)
+		return nil, err
+	}
+
+	return &userResponse.Data, nil
 }
 
 type UserResponse struct {
@@ -37,47 +94,10 @@ type UserServiceResponse struct {
 
 func NewUserClient(cfg configs.Config) UserClientInterface {
 	return &UserClient{
-		urlUserService: cfg.App.UrlUserService,
 		httpClient: &http.Client{
 			Timeout: 30 * time.Second,
 		},
+		UrlApiGateway: cfg.App.UrlApiGateway,
+		config:        cfg,
 	}
-}
-
-// GetUserByID implements [UserClientInterface].
-func (u *UserClient) GetUserByID(ctx context.Context, userID uint) (*UserResponse, error) {
-	url := fmt.Sprintf("%s/api/v1/users/%d", u.urlUserService, userID)
-
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
-	if err != nil {
-		log.Errorf("[UserClient] GetUserByID - 1: %v", err)
-		return nil, err
-	}
-
-	resp, err := u.httpClient.Do(req)
-	if err != nil {
-		log.Errorf("[UserClient] GetUserByID - 2: %v", err)
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		log.Errorf("[UserClient] GetUserByID - 3: received non-200 response code: %d", resp.StatusCode)
-		return nil, fmt.Errorf("failed to get user: status code %d", resp.StatusCode)
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Errorf("[UserClient] GetUserByID - 4: %v", err)
-		return nil, err
-	}
-
-	var userResp UserServiceResponse
-	err = json.Unmarshal(body, &userResp)
-	if err != nil {
-		log.Errorf("[UserClient] GetUserByID - 5: %v", err)
-		return nil, err
-	}
-
-	return &userResp.Data, nil
 }
