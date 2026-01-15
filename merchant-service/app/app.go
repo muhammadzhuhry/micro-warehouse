@@ -12,7 +12,7 @@ import (
 	"syscall"
 	"time"
 
-	middlewareGateway "micro-warehouse/merchant-service/middleware"
+	// middlewareGateway "micro-warehouse/merchant-service/middleware"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
@@ -39,7 +39,7 @@ func RunServer() {
 		Format: "[${time}] $ip ${status} - ${latency}  ${method}  ${path}\n",
 	}))
 
-	app.Use(middlewareGateway.GatewayAuth())
+	// app.Use(middlewareGateway.GatewayAuth())
 
 	container := BuildContainer()
 	SetupRoutes(app, container)
