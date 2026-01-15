@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"micro-warehouse/merchant-service/configs"
+
 	"mime/multipart"
 	"path/filepath"
 	"strings"
@@ -12,32 +13,30 @@ import (
 )
 
 const (
-	MaxImageSize = 2 * 1024 * 1024 // 2 MB
+	MaxImageSize = 2 * 1024 * 1024 // 2MB
 
 	AllowedImageExtensions = ".jpg,.jpeg,.png,.webp,.svg"
-
-	BucketWarehouses = "warehouses"
 )
 
 type FileUploadHelper struct {
 	storage SupabaseInterface
-	config  configs.Config
+	cfg     configs.Config
 }
 
-func NewFileUploadHelper(storage SupabaseInterface, config configs.Config) *FileUploadHelper {
+func NewFileUploadHelper(storage SupabaseInterface, cfg configs.Config) *FileUploadHelper {
 	return &FileUploadHelper{
 		storage: storage,
-		config:  config,
+		cfg:     cfg,
 	}
 }
 
-func (f *FileUploadHelper) UploadPhoto(ctx context.Context, file *multipart.FileHeader) (*UploadResult, error) {
-	if err := f.validateImageFile(file, MaxImageSize); err != nil {
-		log.Errorf("failed to validate image: %v", err)
+func (h *FileUploadHelper) UploadPhoto(ctx context.Context, file *multipart.FileHeader) (*UploadResult, error) {
+	if err := h.validateImageFile(file, MaxImageSize); err != nil {
+		log.Errorf("failed to validate image file: %v", err)
 		return nil, err
 	}
 
-	result, err := f.storage.UploadFile(ctx, file, BucketWarehouses)
+	result, err := h.storage.UploadFile(ctx, file, "merchants")
 	if err != nil {
 		log.Errorf("failed to upload file: %v", err)
 		return nil, err
@@ -46,19 +45,19 @@ func (f *FileUploadHelper) UploadPhoto(ctx context.Context, file *multipart.File
 	return result, nil
 }
 
-func (f *FileUploadHelper) validateImageFile(file *multipart.FileHeader, maxSize int64) error {
+func (h *FileUploadHelper) validateImageFile(file *multipart.FileHeader, maxSize int64) error {
 	if !validateFileSize(file.Size, maxSize) {
 		return fmt.Errorf("file size exceeds the maximum allowed size")
 	}
 
-	if !validateFileExtension(file.Filename, AllowedImageExtensions) {
-		return fmt.Errorf("file extension is not allowed")
+	if !validateFileExtension(getFileExtension(file.Filename), AllowedImageExtensions) {
+		return fmt.Errorf("invalid file extension")
 	}
 
 	return nil
 }
 
-func validateFileSize(size, maxSize int64) bool {
+func validateFileSize(size int64, maxSize int64) bool {
 	return size <= maxSize
 }
 
@@ -66,10 +65,10 @@ func getFileExtension(filename string) string {
 	return strings.ToLower(filepath.Ext(filename))
 }
 
-func validateFileExtension(ext string, allowedExts string) bool {
-	allowed := strings.Split(allowedExts, ",")
-	for _, allow := range allowed {
-		if strings.TrimSpace(allow) == ext {
+func validateFileExtension(extension string, allowedExtensions string) bool {
+	allowed := strings.Split(allowedExtensions, ",")
+	for _, ext := range allowed {
+		if strings.TrimSpace(ext) == extension {
 			return true
 		}
 	}

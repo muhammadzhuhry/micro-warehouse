@@ -13,7 +13,6 @@ type PaginationResponse struct {
 
 func CalculatePagination(page, limit, totalRecords int) PaginationResponse {
 	totalPages := int(math.Ceil(float64(totalRecords) / float64(limit)))
-
 	if totalPages == 0 {
 		totalPages = 1
 	}

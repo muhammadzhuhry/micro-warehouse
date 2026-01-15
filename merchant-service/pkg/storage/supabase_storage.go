@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"micro-warehouse/merchant-service/configs"
+
 	"mime/multipart"
 	"path/filepath"
 	"strings"
@@ -17,26 +18,11 @@ type SupabaseInterface interface {
 }
 
 type SupabaseStorage struct {
-	config configs.Config
 	client *storage_go.Client
+	cfg    configs.Config
 }
 
-type UploadResult struct {
-	URL      string `json:"url"`
-	Path     string `json:"path"`
-	Filename string `json:"filename"`
-}
-
-func NewSupabaseStorage(config configs.Config) SupabaseInterface {
-	client := storage_go.NewClient(config.Supabase.Url, config.Supabase.Key, nil)
-
-	return &SupabaseStorage{
-		config: config,
-		client: client,
-	}
-}
-
-// UploadFile implements [SupabaseInterface].
+// UploadFile implements SupabaseInterface.
 func (s *SupabaseStorage) UploadFile(ctx context.Context, file *multipart.FileHeader, folder string) (*UploadResult, error) {
 	src, err := file.Open()
 	if err != nil {
@@ -52,10 +38,10 @@ func (s *SupabaseStorage) UploadFile(ctx context.Context, file *multipart.FileHe
 	// Create file path
 	filePath := fmt.Sprintf("%s/%s", folder, filename)
 
-	// Content type handler
+	// Use the simpler implementation with proper Content-Type
 	contentType := file.Header.Get("Content-Type")
 	if contentType == "" {
-		// switch content type based on file extension
+		// Set default content type based on file extension
 		switch strings.ToLower(ext) {
 		case ".jpg", ".jpeg":
 			contentType = "image/jpeg"
@@ -71,22 +57,36 @@ func (s *SupabaseStorage) UploadFile(ctx context.Context, file *multipart.FileHe
 	}
 
 	// Create client with proper Content-Type
-	client := storage_go.NewClient(s.config.Supabase.Url, s.config.Supabase.Key, map[string]string{
+	client := storage_go.NewClient(s.cfg.Supabase.Url, s.cfg.Supabase.Key, map[string]string{
 		"Content-Type": contentType,
 	})
 
 	// Upload file
-	_, err = client.UploadFile(s.config.Supabase.Bucket, filePath, src)
+	_, err = client.UploadFile(s.cfg.Supabase.Bucket, filePath, src)
 	if err != nil {
-		return nil, fmt.Errorf("failed to upload file: %w", err)
+		return nil, fmt.Errorf("failed to upload file to supabase: %w", err)
 	}
 
-	// Generate public URL
-	publicURL := client.GetPublicUrl(s.config.Supabase.Bucket, filePath)
+	// Get public URL
+	publicUrl := client.GetPublicUrl(s.cfg.Supabase.Bucket, filePath)
 
 	return &UploadResult{
-		URL:      publicURL.SignedURL,
+		URL:      publicUrl.SignedURL,
 		Path:     filePath,
 		Filename: filename,
 	}, nil
+}
+
+type UploadResult struct {
+	URL      string `json:"url"`
+	Path     string `json:"path"`
+	Filename string `json:"filename"`
+}
+
+func NewSupabaseStorage(cfg configs.Config) SupabaseInterface {
+	client := storage_go.NewClient(cfg.Supabase.Url, cfg.Supabase.Key, nil)
+	return &SupabaseStorage{
+		client: client,
+		cfg:    cfg,
+	}
 }
